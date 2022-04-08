@@ -41,16 +41,26 @@ def cleanValues(point_array,error):
         pos1 += 1
     new_points = []
     new_points_to_remove = []
-    for pos in range(0, len(point_array) - 2):
-        if point_array[pos] not in points_to_remove:
-            new_points.append([point_array[pos],point_array[pos]])
-        else:
-            if len(new_points)>0:
-                new_points.append([new_points[-1][0],point_array[pos]])
-            else:
-                new_points.append([point_array[pos], point_array[pos]])
 
-    return new_points,new_points_to_remove
+    for pos in range(0, len(point_array) - 2):
+        for aux_pos in range(0,10):
+            if point_array[pos] not in points_to_remove:
+                new_points.append([point_array[pos],point_array[pos]])
+            else:
+                if len(new_points)>0:
+                    new_points.append([new_points[-1][0],point_array[pos]])
+                else:
+                    new_points.append([point_array[pos], point_array[pos]])
+
+    aux_new_points = []
+    for point in range(0,len(new_points)-1):
+        grow = (new_points[point+1][0] - new_points[point][0])/10
+        for aux2 in range(0,3):
+            aux_new_points.append([new_points[point][0] + grow * aux2 ,new_points[point][0]])
+
+
+
+    return aux_new_points,new_points_to_remove
 
 
 def getSlope(x1,x2,y1,y2):

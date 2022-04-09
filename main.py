@@ -1,3 +1,9 @@
+import scipy as scipy
+import matplotlib
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy.fft import fft,fftfreq,rfft,rfftfreq,irfft
+
 def main():
     error_range = 0.0009
 
@@ -12,6 +18,32 @@ def main():
             valueArray.append(float(aux))
         result = cleanValues(valueArray,error_range)[0]
         PrintFile(result,"ResultSet_"+str(pos)+".csv")
+
+        if pos == 1:
+            fourier(valueArray,33,16)
+
+def fourier(valueArray,SampleRate,Duration):
+    yf = rfft(valueArray)
+    hits = []
+    for SampleRate in range(1,100):
+        for Duration in range(1,100):
+            N = SampleRate * Duration
+            xf = rfftfreq(N, 1 / SampleRate)
+            if xf.size == len(yf):
+                hits.append((SampleRate,Duration))
+    toReturn = []
+    freqToClear= 0.5
+    for hit in hits:
+        N = hit[0] * hit[1]
+        xf = rfftfreq(N, 1 / hit[0])
+        points_per_freq = len(xf) / (hit[0] / 2)
+        target_idx = int(points_per_freq*freqToClear)
+        yf[target_idx : -1] = 0
+        #toReturn.append()
+        #plt.plot(xf, np.abs(yf))
+        #plt.show()
+        plt.plot(irfft(yf))
+        plt.show()
 
 def PrintFile(data,file):
     to_print = "NewValue;OldValue\n"

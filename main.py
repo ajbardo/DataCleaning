@@ -20,9 +20,9 @@ def main():
         PrintFile(result,"ResultSet_"+str(pos)+".csv")
 
         if pos == 1:
-            fourier(valueArray,33,16)
+            fourier(valueArray,33,16,error_range)
 
-def fourier(valueArray,SampleRate,Duration):
+def fourier(valueArray,SampleRate,Duration,error):
     yf = rfft(valueArray)
     hits = []
     for SampleRate in range(1,100):
@@ -31,19 +31,31 @@ def fourier(valueArray,SampleRate,Duration):
             xf = rfftfreq(N, 1 / SampleRate)
             if xf.size == len(yf):
                 hits.append((SampleRate,Duration))
-    toReturn = []
+
+    fouriers = []
     freqToClear= 0.5
+    min_freq2 = 0.1
     for hit in hits:
         N = hit[0] * hit[1]
         xf = rfftfreq(N, 1 / hit[0])
         points_per_freq = len(xf) / (hit[0] / 2)
         target_idx = int(points_per_freq*freqToClear)
-        yf[target_idx : -1] = 0
+        yf[target_idx : ] = 0
+        aux = np.copy(yf)
+        fouriers.append(aux)
         #toReturn.append()
-        #plt.plot(xf, np.abs(yf))
+        #plt.plot(xf, np.abs(yf))th
         #plt.show()
+        print(hit)
         plt.plot(irfft(yf))
         plt.show()
+
+    for pos1 in range(0,len(valueArray)):
+        for newArray in fouriers:
+            for point in newArray:
+                if valueArray[pos1] + error < point or valueArray[pos1] - error > point:
+                    newArray[0] = 100000
+                    break
 
 def PrintFile(data,file):
     to_print = "NewValue;OldValue\n"

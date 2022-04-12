@@ -41,21 +41,32 @@ def fourier(valueArray,SampleRate,Duration,error):
         points_per_freq = len(xf) / (hit[0] / 2)
         target_idx = int(points_per_freq*freqToClear)
         yf[target_idx : ] = 0
-        aux = np.copy(yf)
-        fouriers.append(aux)
+        fouriers.append(irfft(yf))
         #toReturn.append()
         #plt.plot(xf, np.abs(yf))th
         #plt.show()
         print(hit)
-        plt.plot(irfft(yf))
-        plt.show()
-
+        #plt.plot(irfft(yf))
+        #plt.show()
+    max = 0
+    maxPos = 0
+    fourierHits = {}
     for pos1 in range(0,len(valueArray)):
-        for newArray in fouriers:
-            for point in newArray:
-                if valueArray[pos1] + error < point or valueArray[pos1] - error > point:
-                    newArray[0] = 100000
-                    break
+        to_compare =  valueArray[pos1]
+        for pos2 in range(0,len(fouriers)):
+            if to_compare + error*2 > fouriers[pos2][pos1] and to_compare - error*2 < fouriers[pos2][pos1]:
+                if pos2 in fourierHits:
+                    fourierHits[pos2][0].append(pos1)
+                    fourierHits[pos2][1] += 1
+                    if fourierHits[pos2][1] > max:
+                        max = fourierHits[pos2][1]
+                        maxPos = pos2
+                else:
+                    fourierHits[pos2] = [[pos2],1]
+    plt.plot(fourierHits[maxPos])
+    plt.show()
+
+    print("")
 
 def PrintFile(data,file):
     to_print = "NewValue;OldValue\n"

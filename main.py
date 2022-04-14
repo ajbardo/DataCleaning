@@ -20,9 +20,37 @@ def main():
         PrintFile(result,"ResultSet_"+str(pos)+".csv")
 
         if pos == 1:
-            fourier(valueArray,33,16,error_range)
+            fouResult = fourier(valueArray,error_range)
+            result=appendData(result,fouResult)
+            PrintFile(result, "ResultSet_" + str(pos) +"_E0.0009_Fourier_logical_original"+ ".csv")
 
-def fourier(valueArray,SampleRate,Duration,error):
+def appendData(array1,array2):
+    size = 0
+    toReturn = []
+    if len(array1) > len(array2):
+        size = len(array1)
+    else:
+        size = len(array2)
+
+    for pos in range(0,size):
+        toAppend = []
+        if pos < len(array1):
+            for data in array1[pos]:
+                toAppend.append(data)
+        if pos < len(array2):
+            for data in array2[pos]:
+                toAppend.append(data)
+        toReturn.append(toAppend)
+
+    return toReturn
+
+def fourierV2(valueArray,error):
+    pass
+
+
+def fourier(valueArray,error):
+    SampleRate = 0
+    Duration = 0
     yf = rfft(valueArray)
     hits = []
     for SampleRate in range(1,100):
@@ -34,39 +62,30 @@ def fourier(valueArray,SampleRate,Duration,error):
 
     fouriers = []
     freqToClear= 0.5
-    min_freq2 = 0.1
     for hit in hits:
         N = hit[0] * hit[1]
         xf = rfftfreq(N, 1 / hit[0])
         points_per_freq = len(xf) / (hit[0] / 2)
-        target_idx = int(points_per_freq*freqToClear)
-        yf[target_idx : ] = 0
+        target_idx = int(points_per_freq * freqToClear)
+        yf[target_idx:] = 0
         fouriers.append(irfft(yf))
-        #toReturn.append()
-        #plt.plot(xf, np.abs(yf))th
-        #plt.show()
-        print(hit)
         #plt.plot(irfft(yf))
         #plt.show()
-    max = 0
-    maxPos = 0
-    fourierHits = {}
-    for pos1 in range(0,len(valueArray)):
-        to_compare =  valueArray[pos1]
-        for pos2 in range(0,len(fouriers)):
-            if to_compare + error*2 > fouriers[pos2][pos1] and to_compare - error*2 < fouriers[pos2][pos1]:
-                if pos2 in fourierHits:
-                    fourierHits[pos2][0].append(pos1)
-                    fourierHits[pos2][1] += 1
-                    if fourierHits[pos2][1] > max:
-                        max = fourierHits[pos2][1]
-                        maxPos = pos2
-                else:
-                    fourierHits[pos2] = [[pos2],1]
-    plt.plot(fourierHits[maxPos])
-    plt.show()
+    acumSlope = 0
 
-    print("")
+    for pos in range(0, len(valueArray) - 1):
+        acumSlope += valueArray[pos] - valueArray[pos + 1]
+
+    medSlope = acumSlope / len(valueArray)
+    medFou = []
+    for pos1 in range(0, len(valueArray)):
+        acum = 0
+        med = 0
+        for pos2 in range(0, len(fouriers)):
+            acum += fouriers[pos2][pos1]
+        med = acum / len(fouriers)
+        medFou.append([med])
+    return medFou
 
 def PrintFile(data,file):
     to_print = "NewValue;OldValue\n"
@@ -98,24 +117,14 @@ def cleanValues(point_array,error):
     new_points_to_remove = []
 
     for pos in range(0, len(point_array) - 2):
-        for aux_pos in range(0,10):
-            if point_array[pos] not in points_to_remove:
-                new_points.append([point_array[pos],point_array[pos]])
+        if point_array[pos] not in points_to_remove:
+            new_points.append([point_array[pos],point_array[pos]])
+        else:
+            if len(new_points)>0:
+                new_points.append([new_points[-1][0],point_array[pos]])
             else:
-                if len(new_points)>0:
-                    new_points.append([new_points[-1][0],point_array[pos]])
-                else:
-                    new_points.append([point_array[pos], point_array[pos]])
-
-    aux_new_points = []
-    for point in range(0,len(new_points)-1):
-        grow = (new_points[point+1][0] - new_points[point][0])/10
-        for aux2 in range(0,3):
-            aux_new_points.append([new_points[point][0] + grow * aux2 ,new_points[point][0]])
-
-
-
-    return aux_new_points,new_points_to_remove
+                new_points.append([point_array[pos], point_array[pos]])
+    return new_points,new_points_to_remove
 
 
 def getSlope(x1,x2,y1,y2):

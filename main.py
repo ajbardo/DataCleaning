@@ -1,3 +1,9 @@
+import scipy as scipy
+import matplotlib
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy.fft import fft,fftfreq,rfft,rfftfreq,irfft
+
 def main():
     error_range = 0.0009
 
@@ -12,6 +18,74 @@ def main():
             valueArray.append(float(aux))
         result = cleanValues(valueArray,error_range)[0]
         PrintFile(result,"ResultSet_"+str(pos)+".csv")
+
+        if pos == 1:
+            fouResult = fourier(valueArray,error_range)
+            result=appendData(result,fouResult)
+            PrintFile(result, "ResultSet_" + str(pos) +"_E0.0009_Fourier_logical_original"+ ".csv")
+
+def appendData(array1,array2):
+    size = 0
+    toReturn = []
+    if len(array1) > len(array2):
+        size = len(array1)
+    else:
+        size = len(array2)
+
+    for pos in range(0,size):
+        toAppend = []
+        if pos < len(array1):
+            for data in array1[pos]:
+                toAppend.append(data)
+        if pos < len(array2):
+            for data in array2[pos]:
+                toAppend.append(data)
+        toReturn.append(toAppend)
+
+    return toReturn
+
+def fourierV2(valueArray,error):
+    pass
+
+
+def fourier(valueArray,error):
+    SampleRate = 0
+    Duration = 0
+    yf = rfft(valueArray)
+    hits = []
+    for SampleRate in range(1,100):
+        for Duration in range(1,100):
+            N = SampleRate * Duration
+            xf = rfftfreq(N, 1 / SampleRate)
+            if xf.size == len(yf):
+                hits.append((SampleRate,Duration))
+
+    fouriers = []
+    freqToClear= 0.5
+    for hit in hits:
+        N = hit[0] * hit[1]
+        xf = rfftfreq(N, 1 / hit[0])
+        points_per_freq = len(xf) / (hit[0] / 2)
+        target_idx = int(points_per_freq * freqToClear)
+        yf[target_idx:] = 0
+        fouriers.append(irfft(yf))
+        #plt.plot(irfft(yf))
+        #plt.show()
+    acumSlope = 0
+
+    for pos in range(0, len(valueArray) - 1):
+        acumSlope += valueArray[pos] - valueArray[pos + 1]
+
+    medSlope = acumSlope / len(valueArray)
+    medFou = []
+    for pos1 in range(0, len(valueArray)):
+        acum = 0
+        med = 0
+        for pos2 in range(0, len(fouriers)):
+            acum += fouriers[pos2][pos1]
+        med = acum / len(fouriers)
+        medFou.append([med])
+    return medFou
 
 def PrintFile(data,file):
     to_print = "NewValue;OldValue\n"
@@ -41,6 +115,7 @@ def cleanValues(point_array,error):
         pos1 += 1
     new_points = []
     new_points_to_remove = []
+
     for pos in range(0, len(point_array) - 2):
         if point_array[pos] not in points_to_remove:
             new_points.append([point_array[pos],point_array[pos]])
@@ -49,7 +124,6 @@ def cleanValues(point_array,error):
                 new_points.append([new_points[-1][0],point_array[pos]])
             else:
                 new_points.append([point_array[pos], point_array[pos]])
-
     return new_points,new_points_to_remove
 
 

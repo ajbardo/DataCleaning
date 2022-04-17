@@ -137,5 +137,5 @@ def getSlope(x1,x2,y1,y2):
         slope = 0
     return slope
 
-
-main()
+if __name__ == '__main__':
+    main()
